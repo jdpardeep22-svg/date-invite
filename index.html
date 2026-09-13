@@ -3,231 +3,328 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Project Proposal: Road Trip Edition</title>
+  <title>PROJECT: Himalayan Elevation // Spec Sheet</title>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #0d1117;
-      --card-bg: rgba(22, 27, 34, 0.85);
-      --border: #30363d;
-      --accent: #58a6ff;
-      --text: #c9d1d9;
-      --text-bright: #f0f6fc;
-      --primary-btn: #238636;
-      --primary-hover: #2ea043;
-      --danger-btn: #da3633;
+      --bg: #0b0f19;
+      --card-bg: rgba(15, 23, 42, 0.85);
+      --border: rgba(56, 189, 248, 0.2);
+      --accent: #38bdf8;
+      --accent-glow: rgba(56, 189, 248, 0.4);
+      --text-muted: #94a3b8;
+      --text-main: #f8fafc;
+      --yes-color: #10b981;
+      --yes-hover: #059669;
+      --no-color: #ef4444;
     }
 
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
     }
 
     body {
       min-height: 100vh;
       background-color: var(--bg);
       background-image: 
-        linear-gradient(rgba(48, 54, 61, 0.25) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(48, 54, 61, 0.25) 1px, transparent 1px);
-      background-size: 32px 32px;
-      color: var(--text);
+        linear-gradient(rgba(56, 189, 248, 0.07) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(56, 189, 248, 0.07) 1px, transparent 1px);
+      background-size: 28px 28px;
+      color: var(--text-muted);
+      font-family: 'Plus Jakarta Sans', sans-serif;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 24px;
+      padding: 20px;
       overflow-x: hidden;
+      position: relative;
+    }
+
+    .blueprint-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      pointer-events: none;
+      box-shadow: inset 0 0 100px rgba(0, 0, 0, 0.8);
+      background: radial-gradient(circle at center, transparent 30%, rgba(11, 15, 25, 0.7) 100%);
     }
 
     .container {
       width: 100%;
-      max-width: 640px;
+      max-width: 680px;
       background: var(--card-bg);
       border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 32px;
-      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
-      backdrop-filter: blur(8px);
+      border-radius: 16px;
+      padding: 36px 32px;
+      box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.7), 0 0 40px rgba(56, 189, 248, 0.08);
+      backdrop-filter: blur(12px);
       position: relative;
+      z-index: 2;
     }
 
-    .status-tag {
-      display: inline-block;
-      font-family: ui-monospace, monospace;
-      font-size: 11px;
-      letter-spacing: 0.08em;
-      color: var(--accent);
-      border: 1px solid var(--accent);
-      padding: 4px 10px;
-      border-radius: 20px;
-      margin-bottom: 16px;
+    .corner-mark {
+      position: absolute;
+      width: 12px;
+      height: 12px;
+      border: 2px solid var(--accent);
+    }
+    .top-left { top: 10px; left: 10px; border-right: none; border-bottom: none; }
+    .top-right { top: 10px; right: 10px; border-left: none; border-bottom: none; }
+    .bottom-left { bottom: 10px; left: 10px; border-right: none; border-top: none; }
+    .bottom-right { bottom: 10px; right: 10px; border-left: none; border-top: none; }
+
+    .blueprint-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px dashed var(--border);
+      padding-bottom: 14px;
+      margin-bottom: 24px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      letter-spacing: 0.05em;
       text-transform: uppercase;
+      color: var(--accent);
     }
 
     h1 {
-      font-size: 1.8rem;
-      color: var(--text-bright);
-      margin-bottom: 8px;
+      font-size: 2rem;
+      font-weight: 800;
+      color: var(--text-main);
+      line-height: 1.2;
+      margin-bottom: 10px;
+      letter-spacing: -0.02em;
     }
 
-    p.subtitle {
-      font-size: 0.95rem;
-      line-height: 1.5;
-      margin-bottom: 24px;
+    .subtitle {
+      font-size: 0.98rem;
+      line-height: 1.6;
+      margin-bottom: 26px;
+      color: #cbd5e1;
     }
 
-    .itinerary {
+    /* Route Steps */
+    .timeline {
       display: flex;
       flex-direction: column;
-      gap: 12px;
-      margin-bottom: 28px;
+      gap: 14px;
+      margin-bottom: 30px;
     }
 
-    .leg {
+    .step-card {
+      background: rgba(30, 41, 59, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 10px;
+      padding: 14px 18px;
       display: flex;
-      align-items: flex-start;
-      gap: 12px;
-      background: rgba(13, 17, 23, 0.6);
-      border: 1px solid var(--border);
-      padding: 12px 16px;
+      gap: 14px;
+      align-items: center;
+      transition: border-color 0.2s ease, transform 0.2s ease;
+    }
+
+    .step-card:hover {
+      border-color: var(--accent);
+      transform: translateX(4px);
+    }
+
+    .step-icon {
+      font-size: 1.5rem;
+      background: rgba(56, 189, 248, 0.1);
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       border-radius: 8px;
-      font-size: 0.88rem;
+      flex-shrink: 0;
     }
 
-    .leg-badge {
-      font-family: ui-monospace, monospace;
-      font-size: 11px;
-      color: var(--accent);
-      font-weight: 600;
-      white-space: nowrap;
+    .step-text h4 {
+      color: var(--text-main);
+      font-size: 0.95rem;
+      font-weight: 700;
+      margin-bottom: 2px;
     }
 
-    .leg-content b {
-      color: var(--text-bright);
+    .step-text p {
+      font-size: 0.84rem;
+      color: var(--text-muted);
+      line-height: 1.4;
     }
 
-    .proposal-box {
-      text-align: center;
+    /* Question & Button stage */
+    .action-zone {
       border-top: 1px dashed var(--border);
       padding-top: 24px;
+      text-align: center;
     }
 
-    .question {
+    .question-prompt {
       font-size: 1.25rem;
-      font-weight: 600;
-      color: var(--text-bright);
+      font-weight: 700;
+      color: var(--text-main);
       margin-bottom: 24px;
     }
 
-    .btn-group {
+    .interactive-field {
       position: relative;
-      min-height: 100px;
+      min-height: 120px;
       display: flex;
       justify-content: center;
       align-items: center;
-      gap: 20px;
+      gap: 24px;
     }
 
     button {
-      cursor: pointer;
-      font-size: 1rem;
-      font-weight: 600;
-      padding: 12px 28px;
-      border-radius: 8px;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 1.05rem;
+      font-weight: 700;
+      padding: 14px 34px;
+      border-radius: 10px;
       border: none;
-      transition: transform 0.15s ease, background-color 0.2s ease;
+      cursor: pointer;
+      transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.2s ease;
       touch-action: manipulation;
     }
 
     #yesBtn {
-      background: var(--primary-btn);
+      background: var(--yes-color);
       color: #fff;
+      box-shadow: 0 0 25px rgba(16, 185, 129, 0.3);
       z-index: 10;
     }
 
     #yesBtn:hover {
-      background: var(--primary-hover);
+      background: var(--yes-hover);
+      box-shadow: 0 0 35px rgba(16, 185, 129, 0.5);
     }
 
     #noBtn {
-      background: var(--danger-btn);
+      background: var(--no-color);
       color: #fff;
+      box-shadow: 0 0 20px rgba(239, 68, 68, 0.3);
       position: absolute;
-      transition: all 0.2s ease;
       white-space: nowrap;
+      z-index: 10;
     }
 
+    /* Success Stage */
     #successView {
       display: none;
       text-align: center;
       padding: 16px 0;
+      animation: fadeIn 0.4s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
     #successView h2 {
-      color: var(--text-bright);
-      font-size: 1.8rem;
+      font-size: 2.2rem;
+      color: var(--text-main);
       margin-bottom: 12px;
+      font-weight: 800;
     }
 
-    .action-btn {
-      display: inline-block;
-      margin-top: 20px;
+    .confirm-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
       background: #25d366;
-      color: #000;
-      font-weight: 700;
+      color: #0b0f19;
+      font-weight: 800;
+      font-size: 1.05rem;
+      padding: 16px 36px;
+      border-radius: 12px;
       text-decoration: none;
-      padding: 12px 24px;
-      border-radius: 8px;
-      transition: opacity 0.2s;
+      margin-top: 24px;
+      box-shadow: 0 8px 30px rgba(37, 211, 102, 0.35);
+      transition: transform 0.2s ease;
     }
 
-    .action-btn:hover {
-      opacity: 0.9;
+    .confirm-btn:hover {
+      transform: scale(1.04);
     }
   </style>
 </head>
 <body>
 
-  <div class="container" id="card">
+  <div class="blueprint-overlay"></div>
+
+  <div class="container" id="mainCard">
+    <div class="corner-mark top-left"></div>
+    <div class="corner-mark top-right"></div>
+    <div class="corner-mark bottom-left"></div>
+    <div class="corner-mark bottom-right"></div>
+
     <div id="initialView">
-      <div class="status-tag">Draft Proposal • Site Visit</div>
-      <h1>Akshada, Project Himalayan Elevation</h1>
+      <div class="blueprint-header">
+        <span>DRAWING NO: CHD-RKS-MM-01</span>
+        <span>STATUS: PENDING REVISE</span>
+      </div>
+
+      <h1>Akshada, Project Elevation</h1>
       <p class="subtitle">
-        Blueprint approved. Flights from Pune to Chandigarh are ready to be scheduled. One final permit remains:
+        Blueprint approved. Departure from Pune to Chandigarh is on the boards. The site inspection requires your presence for full validation.
       </p>
 
-      <div class="itinerary">
-        <div class="leg">
-          <span class="leg-badge">LEG 01</span>
-          <div class="leg-content"><b>Pune $\rightarrow$ Chandigarh:</b> Arrival, Corbusier architecture run, and departure setup.</div>
+      <div class="timeline">
+        <div class="step-card">
+          <div class="step-icon">✈️</div>
+          <div class="step-text">
+            <h4>Phase I: Pune $\rightarrow$ Chandigarh</h4>
+            <p>Touchdown in the City Beautiful. Concrete geometry, Le Corbusier sector walks, and pre-trek coffee.</p>
+          </div>
         </div>
-        <div class="leg">
-          <span class="leg-badge">LEG 02</span>
-          <div class="leg-content"><b>Chandigarh $\rightarrow$ Rishikesh:</b> Ganga suspension bridges, riverside evening chai.</div>
+
+        <div class="step-card">
+          <div class="step-icon">🌉</div>
+          <div class="step-text">
+            <h4>Phase II: Chandigarh $\rightarrow$ Rishikesh</h4>
+            <p>Suspension bridges over the Ganga, riverside chai at dusk, and winding Himalayan foothills.</p>
+          </div>
         </div>
-        <div class="leg">
-          <span class="leg-badge">LEG 03</span>
-          <div class="leg-content"><b>Rishikesh $\rightarrow$ Madhyamaheshwar:</b> Ancient stone sanctum, meadow camp at 3,490m.</div>
+
+        <div class="step-card">
+          <div class="step-icon">🏔️</div>
+          <div class="step-text">
+            <h4>Phase III: Rishikesh $\rightarrow$ Madhyamaheshwar</h4>
+            <p>3,490m high-altitude stone shrine, meadow camping, and pure mountain air.</p>
+          </div>
         </div>
       </div>
 
-      <div class="proposal-box">
-        <div class="question">Will you come on an official road trip date with me?</div>
-        <div class="btn-group" id="buttonArea">
-          <button id="yesBtn">Yes! 🏔️</button>
+      <div class="action-zone">
+        <div class="question-prompt">Will you come on this road trip date with me?</div>
+        <div class="interactive-field" id="arena">
+          <button id="yesBtn">YES! 🎒</button>
           <button id="noBtn">No</button>
         </div>
       </div>
     </div>
 
     <div id="successView">
-      <div class="status-tag" style="color: #2ea043; border-color: #2ea043;">Permit Approved</div>
-      <h2>It’s a Date! 🎒</h2>
-      <p style="line-height: 1.6;">
-        Pune to the Garhwal Himalayas. Pack your trekking shoes, charge your camera, and leave the AutoCAD files behind.
+      <div class="blueprint-header" style="color: #10b981; border-color: #10b981;">
+        <span>STRUCTURAL STATUS: 100% COMMITTED</span>
+        <span>EXPEDITION SIGN-OFF</span>
+      </div>
+      <h2>It’s an Official Date! 🏔️✨</h2>
+      <p style="color: #cbd5e1; font-size: 1rem; line-height: 1.6; max-width: 500px; margin: 0 auto;">
+        No blueprints, no deadlines, no AutoCAD. Pack your trekking pack, Pune to the Garhwal peaks is a go.
       </p>
-      <a id="waLink" class="action-btn" href="#" target="_blank">Seal the Plan on WhatsApp</a>
+      <a class="confirm-btn" id="waSubmit" href="#" target="_blank">
+        <span>Send WhatsApp Confirmation</span>
+        <span>👉</span>
+      </a>
     </div>
   </div>
 
@@ -236,67 +333,97 @@
     const yesBtn = document.getElementById("yesBtn");
     const initialView = document.getElementById("initialView");
     const successView = document.getElementById("successView");
-    const card = document.getElementById("card");
-    const waLink = document.getElementById("waLink");
+    const arena = document.getElementById("arena");
+    const waSubmit = document.getElementById("waSubmit");
 
-    // Replace with your WhatsApp phone number with country code (e.g., 919876543210)
-    const phoneNumber = "917814499077";
-    const message = encodeURIComponent("Permit approved! It's a date. Let's do Chandigarh, Rishikesh, and Madhyamaheshwar! 🏔️✨");
-    waLink.href = `https://wa.me/${phoneNumber}?text=${message}`;
+    // Phone number linked
+    const targetPhone = "917814499077";
+    const waMsg = encodeURIComponent("Permit approved! It's a date. Pack your bags, we are heading to Chandigarh, Rishikesh, and Madhyamaheshwar! 🏔️✨");
+    waSubmit.href = `https://wa.me/${targetPhone}?text=${waMsg}`;
 
-    const noTexts = [
+    const noQuips = [
       "No",
-      "Are you sure?",
-      "AutoCAD crashed!",
-      "Structure unsafe",
+      "Structural failure!",
+      "AutoCAD crashed",
+      "Corbusier says YES",
+      "Permit Denied",
       "Recalculating...",
-      "Corbusier disapproves",
-      "Only 'Yes' stands",
-      "Nice try 😜"
+      "Try again 😜",
+      "Button unclickable"
     ];
 
-    let noIndex = 0;
+    let quipIndex = 0;
     let yesScale = 1;
 
-    function dodge() {
-      const cardRect = card.getBoundingClientRect();
+    // Web Audio synthesizer beep
+    function playBeep() {
+      try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = "sine";
+        osc.frequency.value = 400 + Math.random() * 250;
+        gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.15);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.15);
+      } catch (e) {}
+    }
+
+    function runAway() {
+      playBeep();
+      const arenaRect = arena.getBoundingClientRect();
       const btnRect = noBtn.getBoundingClientRect();
 
-      // Random position inside the container boundaries
-      const maxLeft = cardRect.width - btnRect.width - 40;
-      const maxTop = cardRect.height - btnRect.height - 40;
+      const maxX = arenaRect.width - btnRect.width - 20;
+      const maxY = arenaRect.height - btnRect.height - 10;
 
-      const randomLeft = Math.max(20, Math.floor(Math.random() * maxLeft));
-      const randomTop = Math.max(20, Math.floor(Math.random() * maxTop));
+      const randX = Math.max(10, Math.floor(Math.random() * maxX));
+      const randY = Math.max(0, Math.floor(Math.random() * maxY));
 
-      noBtn.style.position = "absolute";
-      noBtn.style.left = `${randomLeft}px`;
-      noBtn.style.top = `${randomTop}px`;
+      noBtn.style.left = `${randX}px`;
+      noBtn.style.top = `${randY}px`;
 
-      // Cycle humorous rejection text
-      noIndex = (noIndex + 1) % noTexts.length;
-      noBtn.innerText = noTexts[noIndex];
+      quipIndex = (quipIndex + 1) % noQuips.length;
+      noBtn.innerText = noQuips[quipIndex];
 
-      // Grow Yes button
-      yesScale += 0.12;
+      yesScale += 0.14;
       yesBtn.style.transform = `scale(${yesScale})`;
     }
 
-    noBtn.addEventListener("mouseover", dodge);
+    noBtn.addEventListener("mouseenter", runAway);
     noBtn.addEventListener("touchstart", (e) => {
       e.preventDefault();
-      dodge();
+      runAway();
     });
 
     yesBtn.addEventListener("click", () => {
       initialView.style.display = "none";
       successView.style.display = "block";
 
-      confetti({
-        particleCount: 120,
-        spread: 70,
-        origin: { y: 0.6 }
-      });
+      const duration = 2.5 * 1000;
+      const end = Date.now() + duration;
+
+      (function frame() {
+        confetti({
+          particleCount: 4,
+          angle: 60,
+          spread: 55,
+          origin: { x: 0 }
+        });
+        confetti({
+          particleCount: 4,
+          angle: 120,
+          spread: 55,
+          origin: { x: 1 }
+        });
+
+        if (Date.now() < end) {
+          requestAnimationFrame(frame);
+        }
+      })();
     });
   </script>
 </body>
