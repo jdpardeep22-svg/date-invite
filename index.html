@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Project Proposal: Road Trip Edition</title>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --card-bg: rgba(22, 27, 34, 0.85);
+      --border: #30363d;
+      --accent: #58a6ff;
+      --text: #c9d1d9;
+      --text-bright: #f0f6fc;
+      --primary-btn: #238636;
+      --primary-hover: #2ea043;
+      --danger-btn: #da3633;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      background-color: var(--bg);
+      background-image: 
+        linear-gradient(rgba(48, 54, 61, 0.25) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(48, 54, 61, 0.25) 1px, transparent 1px);
+      background-size: 32px 32px;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      overflow-x: hidden;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 640px;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 32px;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(8px);
+      position: relative;
+    }
+
+    .status-tag {
+      display: inline-block;
+      font-family: ui-monospace, monospace;
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      color: var(--accent);
+      border: 1px solid var(--accent);
+      padding: 4px 10px;
+      border-radius: 20px;
+      margin-bottom: 16px;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      font-size: 1.8rem;
+      color: var(--text-bright);
+      margin-bottom: 8px;
+    }
+
+    p.subtitle {
+      font-size: 0.95rem;
+      line-height: 1.5;
+      margin-bottom: 24px;
+    }
+
+    .itinerary {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 28px;
+    }
+
+    .leg {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      background: rgba(13, 17, 23, 0.6);
+      border: 1px solid var(--border);
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 0.88rem;
+    }
+
+    .leg-badge {
+      font-family: ui-monospace, monospace;
+      font-size: 11px;
+      color: var(--accent);
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .leg-content b {
+      color: var(--text-bright);
+    }
+
+    .proposal-box {
+      text-align: center;
+      border-top: 1px dashed var(--border);
+      padding-top: 24px;
+    }
+
+    .question {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--text-bright);
+      margin-bottom: 24px;
+    }
+
+    .btn-group {
+      position: relative;
+      min-height: 100px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 20px;
+    }
+
+    button {
+      cursor: pointer;
+      font-size: 1rem;
+      font-weight: 600;
+      padding: 12px 28px;
+      border-radius: 8px;
+      border: none;
+      transition: transform 0.15s ease, background-color 0.2s ease;
+      touch-action: manipulation;
+    }
+
+    #yesBtn {
+      background: var(--primary-btn);
+      color: #fff;
+      z-index: 10;
+    }
+
+    #yesBtn:hover {
+      background: var(--primary-hover);
+    }
+
+    #noBtn {
+      background: var(--danger-btn);
+      color: #fff;
+      position: absolute;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+
+    #successView {
+      display: none;
+      text-align: center;
+      padding: 16px 0;
+    }
+
+    #successView h2 {
+      color: var(--text-bright);
+      font-size: 1.8rem;
+      margin-bottom: 12px;
+    }
+
+    .action-btn {
+      display: inline-block;
+      margin-top: 20px;
+      background: #25d366;
+      color: #000;
+      font-weight: 700;
+      text-decoration: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      transition: opacity 0.2s;
+    }
+
+    .action-btn:hover {
+      opacity: 0.9;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container" id="card">
+    <div id="initialView">
+      <div class="status-tag">Draft Proposal • Site Visit</div>
+      <h1>Akshada, Project Himalayan Elevation</h1>
+      <p class="subtitle">
+        Blueprint approved. Flights from Pune to Chandigarh are ready to be scheduled. One final permit remains:
+      </p>
+
+      <div class="itinerary">
+        <div class="leg">
+          <span class="leg-badge">LEG 01</span>
+          <div class="leg-content"><b>Pune $\rightarrow$ Chandigarh:</b> Arrival, Corbusier architecture run, and departure setup.</div>
+        </div>
+        <div class="leg">
+          <span class="leg-badge">LEG 02</span>
+          <div class="leg-content"><b>Chandigarh $\rightarrow$ Rishikesh:</b> Ganga suspension bridges, riverside evening chai.</div>
+        </div>
+        <div class="leg">
+          <span class="leg-badge">LEG 03</span>
+          <div class="leg-content"><b>Rishikesh $\rightarrow$ Madhyamaheshwar:</b> Ancient stone sanctum, meadow camp at 3,490m.</div>
+        </div>
+      </div>
+
+      <div class="proposal-box">
+        <div class="question">Will you come on an official road trip date with me?</div>
+        <div class="btn-group" id="buttonArea">
+          <button id="yesBtn">Yes! 🏔️</button>
+          <button id="noBtn">No</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="successView">
+      <div class="status-tag" style="color: #2ea043; border-color: #2ea043;">Permit Approved</div>
+      <h2>It’s a Date! 🎒</h2>
+      <p style="line-height: 1.6;">
+        Pune to the Garhwal Himalayas. Pack your trekking shoes, charge your camera, and leave the AutoCAD files behind.
+      </p>
+      <a id="waLink" class="action-btn" href="#" target="_blank">Seal the Plan on WhatsApp</a>
+    </div>
+  </div>
+
+  <script>
+    const noBtn = document.getElementById("noBtn");
+    const yesBtn = document.getElementById("yesBtn");
+    const initialView = document.getElementById("initialView");
+    const successView = document.getElementById("successView");
+    const card = document.getElementById("card");
+    const waLink = document.getElementById("waLink");
+
+    // Replace with your WhatsApp phone number with country code (e.g., 919876543210)
+    const phoneNumber = "YOUR_PHONE_NUMBER";
+    const message = encodeURIComponent("Permit approved! It's a date. Let's do Chandigarh, Rishikesh, and Madhyamaheshwar! 🏔️✨");
+    waLink.href = `https://wa.me/${phoneNumber}?text=${message}`;
+
+    const noTexts = [
+      "No",
+      "Are you sure?",
+      "AutoCAD crashed!",
+      "Structure unsafe",
+      "Recalculating...",
+      "Corbusier disapproves",
+      "Only 'Yes' stands",
+      "Nice try 😜"
+    ];
+
+    let noIndex = 0;
+    let yesScale = 1;
+
+    function dodge() {
+      const cardRect = card.getBoundingClientRect();
+      const btnRect = noBtn.getBoundingClientRect();
+
+      // Random position inside the container boundaries
+      const maxLeft = cardRect.width - btnRect.width - 40;
+      const maxTop = cardRect.height - btnRect.height - 40;
+
+      const randomLeft = Math.max(20, Math.floor(Math.random() * maxLeft));
+      const randomTop = Math.max(20, Math.floor(Math.random() * maxTop));
+
+      noBtn.style.position = "absolute";
+      noBtn.style.left = `${randomLeft}px`;
+      noBtn.style.top = `${randomTop}px`;
+
+      // Cycle humorous rejection text
+      noIndex = (noIndex + 1) % noTexts.length;
+      noBtn.innerText = noTexts[noIndex];
+
+      // Grow Yes button
+      yesScale += 0.12;
+      yesBtn.style.transform = `scale(${yesScale})`;
+    }
+
+    noBtn.addEventListener("mouseover", dodge);
+    noBtn.addEventListener("touchstart", (e) => {
+      e.preventDefault();
+      dodge();
+    });
+
+    yesBtn.addEventListener("click", () => {
+      initialView.style.display = "none";
+      successView.style.display = "block";
+
+      confetti({
+        particleCount: 120,
+        spread: 70,
+        origin: { y: 0.6 }
+      });
+    });
+  </script>
+</body>
+</html>
