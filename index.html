@@ -2,20 +2,30 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>AUTOCAD - [TERRAIN_PHYSICS_SIM.DWG]</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>PROJECT: THE ASCENT // CHD → MM</title>
+  
+  <!-- Three.js 3D Engine & Confetti -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Architectural & Editorial Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+
   <style>
     :root {
-      --cad-bg: #12161f;
-      --cad-grid: rgba(56, 189, 248, 0.07);
-      --cad-cyan: #38bdf8;
-      --cad-green: #10b981;
-      --cad-red: #f43f5e;
-      --cad-yellow: #fbbf24;
-      --panel-bg: rgba(18, 24, 38, 0.85);
-      --border-line: rgba(56, 189, 248, 0.25);
+      --bg-dark: #04060a;
+      --accent-cyan: #00f2fe;
+      --accent-glow: rgba(0, 242, 254, 0.4);
+      --accent-gold: #f59e0b;
+      --accent-emerald: #10b981;
+      --accent-crimson: #ff3366;
+      --glass-panel: rgba(10, 14, 24, 0.72);
+      --glass-border: rgba(0, 242, 254, 0.22);
+      --text-muted: #8492a6;
+      --text-pure: #f8fafc;
     }
 
     * {
@@ -26,595 +36,738 @@
       user-select: none;
     }
 
-    body {
-      min-height: 100vh;
-      background-color: var(--cad-bg);
-      color: #e2e8f0;
-      font-family: 'Plus Jakarta Sans', sans-serif;
+    html, body {
+      width: 100%;
+      height: 100%;
       overflow: hidden;
-      position: relative;
+      background: var(--bg-dark);
+      color: var(--text-pure);
+      font-family: 'Space Grotesk', sans-serif;
     }
 
-    /* Fullscreen Physics Simulation Canvas */
-    #cadCanvas {
+    /* 3D WebGL Canvas Layer */
+    #webgl-canvas {
       position: fixed;
-      top: 0;
-      left: 0;
+      inset: 0;
       width: 100%;
       height: 100%;
       z-index: 1;
       display: block;
     }
 
-    /* Top HUD Technical Bar */
-    .cad-top-bar {
+    /* Architectural Top Drafting Ruler */
+    .cad-top-hud {
       position: fixed;
       top: 0;
       left: 0;
-      width: 100%;
+      right: 0;
       height: 32px;
-      background: rgba(10, 14, 23, 0.9);
-      border-bottom: 1px solid rgba(56, 189, 248, 0.2);
+      background: rgba(4, 6, 10, 0.85);
+      border-bottom: 1px solid rgba(0, 242, 254, 0.15);
       display: flex;
       align-items: center;
       justify-content: space-between;
       padding: 0 16px;
       font-family: 'JetBrains Mono', monospace;
-      font-size: 11px;
-      color: #94a3b8;
-      z-index: 20;
-      backdrop-filter: blur(6px);
+      font-size: 10px;
+      color: var(--text-muted);
+      letter-spacing: 0.06em;
+      z-index: 30;
+      backdrop-filter: blur(12px);
     }
 
-    .cad-status {
-      display: flex;
+    .live-status {
+      display: inline-flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
+      color: var(--accent-cyan);
     }
 
-    .live-dot {
-      width: 7px;
-      height: 7px;
-      background: var(--cad-green);
+    .pulse-dot {
+      width: 6px;
+      height: 6px;
       border-radius: 50%;
-      box-shadow: 0 0 8px var(--cad-green);
-      animation: pulse 1.5s infinite;
+      background: var(--accent-cyan);
+      box-shadow: 0 0 10px var(--accent-cyan);
+      animation: pulseAnim 2s infinite ease-in-out;
     }
 
-    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+    @keyframes pulseAnim {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(0.6); opacity: 0.3; }
+    }
 
-    /* UI Application Layer */
-    .app-screen {
+    /* Foreground UI Layout */
+    .viewport-overlay {
       position: relative;
       z-index: 10;
-      min-height: 100vh;
+      height: 100dvh;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      padding: 44px 18px 24px;
-      pointer-events: none; /* Let background canvas breathe */
+      padding: 44px 16px calc(24px + env(safe-area-inset-bottom));
+      pointer-events: none;
     }
 
-    .main-card {
+    /* The Architectural Dossier Card */
+    .dossier-card {
       pointer-events: auto;
-      background: var(--panel-bg);
-      border: 1px solid var(--border-line);
-      border-radius: 14px;
-      padding: 20px 18px;
-      backdrop-filter: blur(14px);
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
-      max-width: 520px;
-      margin: 0 auto;
       width: 100%;
+      max-width: 480px;
+      margin: 0 auto;
+      background: var(--glass-panel);
+      border: 1px solid var(--glass-border);
+      border-radius: 18px;
+      padding: 20px 18px;
+      backdrop-filter: blur(20px);
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.7), inset 0 0 20px rgba(0, 242, 254, 0.05);
       position: relative;
+      animation: revealCard 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
     }
 
-    .corner-bracket {
+    @keyframes revealCard {
+      from { opacity: 0; transform: translateY(-20px) scale(0.97); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    /* Precision Technical Corner Crop Marks */
+    .crop-mark {
       position: absolute;
-      width: 8px;
-      height: 8px;
-      border: 2px solid var(--cad-cyan);
+      width: 10px;
+      height: 10px;
+      border-color: var(--accent-cyan);
+      border-style: solid;
+      opacity: 0.75;
     }
-    .cb-tl { top: -1px; left: -1px; border-right: none; border-bottom: none; }
-    .cb-tr { top: -1px; right: -1px; border-left: none; border-bottom: none; }
-    .cb-bl { bottom: -1px; left: -1px; border-right: none; border-top: none; }
-    .cb-br { bottom: -1px; right: -1px; border-left: none; border-top: none; }
+    .cm-tl { top: -1px; left: -1px; border-width: 2px 0 0 2px; }
+    .cm-tr { top: -1px; right: -1px; border-width: 2px 2px 0 0; }
+    .cm-bl { bottom: -1px; left: -1px; border-width: 0 0 2px 2px; }
+    .cm-br { bottom: -1px; right: -1px; border-width: 0 2px 2px 0; }
 
-    .file-tag {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 11px;
-      color: var(--cad-cyan);
-      letter-spacing: 0.05em;
-      margin-bottom: 8px;
+    .doc-stamp {
       display: flex;
       justify-content: space-between;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      color: var(--accent-cyan);
+      letter-spacing: 0.08em;
+      margin-bottom: 8px;
+      text-transform: uppercase;
     }
 
     h1 {
-      font-size: 1.55rem;
-      font-weight: 800;
-      color: #fff;
+      font-family: 'Cinzel', serif;
+      font-size: 1.65rem;
+      font-weight: 900;
+      letter-spacing: 0.02em;
+      line-height: 1.15;
       margin-bottom: 6px;
-      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, #ffffff 40%, #a5f3fc 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
     }
 
-    p.subtitle {
-      font-size: 0.85rem;
-      color: #94a3b8;
+    .lead-text {
+      font-size: 0.84rem;
+      color: var(--text-muted);
       line-height: 1.45;
       margin-bottom: 14px;
     }
 
-    /* Itinerary Route Nodes */
-    .route-nodes {
+    /* Route Vector Nodes */
+    .itinerary-track {
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 7px;
     }
 
-    .node-item {
+    .track-node {
       display: flex;
       align-items: center;
       gap: 12px;
       background: rgba(15, 23, 42, 0.6);
       border: 1px solid rgba(255, 255, 255, 0.06);
-      border-radius: 8px;
-      padding: 10px 12px;
+      border-radius: 10px;
+      padding: 9px 12px;
+      transition: border-color 0.2s ease;
     }
 
-    .node-glyph { font-size: 1.2rem; }
-    .node-info h4 { font-size: 0.86rem; color: #f8fafc; font-weight: 700; }
-    .node-info p { font-size: 0.73rem; color: #94a3b8; font-family: 'JetBrains Mono', monospace; }
+    .track-node:hover {
+      border-color: rgba(0, 242, 254, 0.4);
+    }
 
-    /* Action Deck */
-    .action-deck {
+    .node-icon {
+      width: 34px;
+      height: 34px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      background: rgba(0, 242, 254, 0.08);
+      font-size: 1.1rem;
+      flex-shrink: 0;
+    }
+
+    .node-desc h4 {
+      font-size: 0.86rem;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .node-desc p {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem;
+      color: #7dd3fc;
+    }
+
+    /* Decision Area */
+    .decision-deck {
       pointer-events: auto;
       width: 100%;
-      max-width: 520px;
+      max-width: 480px;
       margin: 0 auto;
       display: flex;
       flex-direction: column;
       align-items: center;
       gap: 14px;
-      margin-bottom: 8px;
     }
 
-    .prompt-text {
+    .proposal-prompt {
+      font-family: 'Cinzel', serif;
       font-size: 1.15rem;
-      font-weight: 800;
-      color: #ffffff;
+      font-weight: 700;
       text-align: center;
-      text-shadow: 0 2px 12px rgba(0,0,0,0.9);
+      color: #ffffff;
+      text-shadow: 0 4px 20px rgba(0, 0, 0, 0.9);
+      letter-spacing: 0.02em;
     }
 
     #yesBtn {
       width: 100%;
       max-width: 320px;
-      padding: 16px 28px;
-      background: var(--cad-green);
-      color: #062b19;
-      border: none;
-      border-radius: 50px;
+      padding: 17px 32px;
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: #032014;
+      font-family: 'Space Grotesk', sans-serif;
       font-size: 1.15rem;
       font-weight: 800;
-      letter-spacing: 0.02em;
+      border: none;
+      border-radius: 100px;
       cursor: pointer;
-      box-shadow: 0 0 30px rgba(16, 185, 129, 0.5);
-      transition: transform 0.15s ease, box-shadow 0.2s ease;
+      box-shadow: 0 0 35px rgba(16, 185, 129, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+      transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
       touch-action: manipulation;
+      z-index: 50;
+      letter-spacing: 0.03em;
     }
 
-    #yesBtn:active { transform: scale(0.97); }
+    #yesBtn:active {
+      transform: scale(0.96);
+    }
 
-    /* The Physics Runaway 'No' Button */
+    /* Magnetic Evasive No Button */
     #noBtn {
       position: fixed;
-      top: 76%;
+      top: 77%;
       left: 50%;
       transform: translate(-50%, -50%);
-      padding: 10px 22px;
-      background: var(--cad-red);
+      padding: 11px 24px;
+      background: rgba(255, 51, 102, 0.85);
       color: #fff;
-      border: 1px solid rgba(255, 255, 255, 0.4);
-      border-radius: 50px;
-      font-size: 0.85rem;
-      font-weight: 700;
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      border-radius: 100px;
       font-family: 'JetBrains Mono', monospace;
+      font-size: 0.82rem;
+      font-weight: 700;
       cursor: pointer;
-      box-shadow: 0 0 20px rgba(244, 63, 94, 0.6);
+      box-shadow: 0 0 25px rgba(255, 51, 102, 0.5);
       white-space: nowrap;
-      z-index: 100;
+      z-index: 9999;
       touch-action: manipulation;
       transition: all 0.2s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+      pointer-events: auto;
     }
 
-    /* Success Fullscreen Overlay */
-    #successView {
+    /* Golden Hour Celebration Screen */
+    #celebrationPanel {
       display: none;
       position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(10, 14, 23, 0.95);
-      z-index: 1000;
+      inset: 0;
+      background: radial-gradient(circle at center, rgba(14, 28, 44, 0.94) 0%, rgba(4, 6, 10, 0.98) 100%);
+      z-index: 10000;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       text-align: center;
       padding: 24px;
-      backdrop-filter: blur(12px);
+      backdrop-filter: blur(20px);
+      animation: fadeInReveal 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
     }
 
-    #successView h2 {
-      font-size: 2.2rem;
-      color: var(--cad-green);
-      margin-bottom: 12px;
-      font-weight: 800;
+    @keyframes fadeInReveal {
+      from { opacity: 0; transform: scale(0.96); }
+      to { opacity: 1; transform: scale(1); }
     }
 
-    .wa-button {
+    .approval-tag {
       display: inline-flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
+      padding: 6px 14px;
+      border-radius: 100px;
+      border: 1px solid var(--accent-emerald);
+      color: var(--accent-emerald);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      background: rgba(16, 185, 129, 0.08);
+    }
+
+    #celebrationPanel h2 {
+      font-family: 'Cinzel', serif;
+      font-size: 2.2rem;
+      font-weight: 900;
+      letter-spacing: 0.02em;
+      margin-bottom: 12px;
+      background: linear-gradient(135deg, #34d399, #67e8f9);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .celebration-subtext {
+      color: #cbd5e1;
+      font-size: 0.96rem;
+      line-height: 1.6;
+      max-width: 360px;
+      margin-bottom: 28px;
+    }
+
+    .wa-link-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
       background: #25d366;
-      color: #062b19;
+      color: #032014;
       font-weight: 800;
-      padding: 16px 32px;
-      border-radius: 12px;
-      text-decoration: none;
-      margin-top: 24px;
-      box-shadow: 0 8px 30px rgba(37, 211, 102, 0.4);
       font-size: 1.05rem;
+      padding: 18px 34px;
+      border-radius: 14px;
+      text-decoration: none;
+      box-shadow: 0 10px 40px rgba(37, 211, 102, 0.45);
       transition: transform 0.2s ease;
+    }
+
+    .wa-link-btn:hover {
+      transform: scale(1.03);
     }
   </style>
 </head>
 <body>
 
-  <!-- CAD Top Technical Status -->
-  <div class="cad-top-bar">
-    <div class="cad-status">
-      <span class="live-dot"></span>
-      <span>AUTOCAD ROADTRIP_ENG.DWG</span>
+  <!-- Top Real-time HUD -->
+  <div class="cad-top-hud">
+    <div class="live-status">
+      <span class="pulse-dot"></span>
+      <span>EXPEDITION SPEC // ARCH_ROADTRIP.3D</span>
     </div>
-    <span id="telemetry">V: 68 KM/H | SLOPE: +0.0° | ELEV: 350M</span>
+    <span id="hudReadout">ALT: 3,490M • SLOPE: +11.4° • REALTIME 3D</span>
   </div>
 
-  <!-- Realtime Simulation Canvas -->
-  <canvas id="cadCanvas"></canvas>
+  <!-- Real WebGL 3D Canvas -->
+  <canvas id="webgl-canvas"></canvas>
 
-  <!-- Interactive Content Layer -->
-  <div class="app-screen" id="initialView">
-    <div class="main-card">
-      <div class="corner-bracket cb-tl"></div>
-      <div class="corner-bracket cb-tr"></div>
-      <div class="corner-bracket cb-bl"></div>
-      <div class="corner-bracket cb-br"></div>
+  <!-- Dossier Overlay -->
+  <div class="viewport-overlay" id="briefDeck">
+    <div class="dossier-card">
+      <div class="crop-mark cm-tl"></div>
+      <div class="crop-mark cm-tr"></div>
+      <div class="crop-mark cm-bl"></div>
+      <div class="crop-mark cm-br"></div>
 
-      <div class="file-tag">
-        <span>PROJECT: HIMALAYAN ELEVATION</span>
-        <span>SCALE: 1:1</span>
+      <div class="doc-stamp">
+        <span>ARCHITECT: AKSHADA ANAGLI</span>
+        <span>STATUS: PENDING REVISE</span>
       </div>
-      <h1>Akshada, Project Elevation</h1>
-      <p class="subtitle">
-        Architectural plan signed off. Departure from Pune to Chandigarh is on the boards. Site inspection is pending your presence.
+
+      <h1>The Himalayan Ascent</h1>
+      <p class="lead-text">
+        The drawings are approved. Departure from Pune to Chandigarh is on the boards. The Garhwal mountain site inspection is missing its lead architect.
       </p>
 
-      <div class="route-nodes">
-        <div class="node-item">
-          <span class="node-glyph">✈️</span>
-          <div class="node-info">
+      <div class="itinerary-track">
+        <div class="track-node">
+          <div class="node-icon">✈️</div>
+          <div class="node-desc">
             <h4>Phase I: Pune → Chandigarh</h4>
-            <p>Le Corbusier concrete sectors & pre-trek espresso</p>
+            <p>Le Corbusier geometry & pre-departure espresso</p>
           </div>
         </div>
-        <div class="node-item">
-          <span class="node-glyph">🌉</span>
-          <div class="node-info">
+        <div class="track-node">
+          <div class="node-icon">🌉</div>
+          <div class="node-desc">
             <h4>Phase II: Chandigarh → Rishikesh</h4>
-            <p>Suspension bridges over Ganga & dusk chai</p>
+            <p>Suspension bridges over Ganga & dusk tea</p>
           </div>
         </div>
-        <div class="node-item">
-          <span class="node-glyph">🏔️</span>
-          <div class="node-info">
+        <div class="track-node">
+          <div class="node-icon">🏔️</div>
+          <div class="node-desc">
             <h4>Phase III: Rishikesh → Madhyamaheshwar</h4>
-            <p>Himalayan high alpine meadow at 3,490m elevation</p>
+            <p>High alpine meadow at 3,490m stone sanctum</p>
           </div>
         </div>
       </div>
     </div>
 
-    <div class="action-deck">
-      <div class="prompt-text">Will you come on this road trip date with me?</div>
-      <button id="yesBtn">YES! 🎒</button>
+    <div class="decision-deck">
+      <div class="proposal-prompt">Will you go on this road trip date with me?</div>
+      <button id="yesBtn">YES! 🎒✨</button>
     </div>
   </div>
 
-  <!-- Runaway No Button -->
+  <!-- Evasive Tactical Button -->
   <button id="noBtn">No</button>
 
-  <!-- Success Confirmation Screen -->
-  <div id="successView">
-    <div class="file-tag" style="color: var(--cad-green); margin-bottom: 12px;">
-      <span>PERMIT REVISION: FINAL APPROVED</span>
+  <!-- Golden Hour Celebration Panel -->
+  <div id="celebrationPanel">
+    <div class="approval-tag">
+      <span>●</span> PERMIT STATUS: 100% SIGNED
     </div>
     <h2>It’s an Official Date! 🏔️✨</h2>
-    <p style="color: #94a3b8; font-size: 0.95rem; line-height: 1.6; max-width: 340px;">
-      Close AutoCAD, leave the drafting table, and pack your trekking pack. Pune to Himalayan summits is confirmed.
+    <p class="celebration-subtext">
+      Close AutoCAD, leave the drafting table behind, and pack your bags. Pune to the Garhwal peaks is a go.
     </p>
-    <a class="wa-button" id="waSubmit" href="#" target="_blank">
-      Confirm on WhatsApp 👉
+    <a class="wa-link-btn" id="waConfirmLink" href="#" target="_blank">
+      <span>Seal the Plan on WhatsApp</span>
+      <span>👉</span>
     </a>
   </div>
 
   <script>
-    // --- Canvas Simulation & Physics Engine ---
-    const canvas = document.getElementById("cadCanvas");
-    const ctx = canvas.getContext("2d");
-    const telemetry = document.getElementById("telemetry");
-
-    let width, height;
-    function resize() {
-      width = canvas.width = window.innerWidth;
-      height = canvas.height = window.innerHeight;
-    }
-    window.addEventListener("resize", resize);
-    resize();
-
-    // Terrain Multi-Sine elevation formula
-    let roadOffset = 0;
-    function getGroundHeight(x, offset) {
-      const globalX = x + offset;
-      const baseGround = height * 0.78;
-      // Layered sin/cos harmonics create realistic mountain passes & valleys
-      const wave1 = Math.sin(globalX * 0.0022) * 55;
-      const wave2 = Math.cos(globalX * 0.0055) * 35;
-      const wave3 = Math.sin(globalX * 0.012) * 14;
-      return baseGround + wave1 + wave2 + wave3;
-    }
-
-    // Car properties & particle exhaust
-    const car = {
-      x: 0,
-      y: 0,
-      angle: 0,
-      wheelBase: 64,
-      wheelRotation: 0
+    /* =========================================================================
+       1. SYNTHESIZER AUDIO ENGINE (Zero External Assets)
+       ========================================================================= */
+    const SoundBox = {
+      ctx: null,
+      init() {
+        if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+      },
+      playEvasion() {
+        this.init();
+        if (!this.ctx) return;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(400, this.ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(800, this.ctx.currentTime + 0.1);
+        gain.gain.setValueAtTime(0.08, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.1);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start();
+        osc.stop(this.ctx.currentTime + 0.1);
+      },
+      playChime() {
+        this.init();
+        if (!this.ctx) return;
+        [523.25, 659.25, 783.99, 1046.50].forEach((freq, i) => {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = "triangle";
+          osc.frequency.value = freq;
+          gain.gain.setValueAtTime(0, this.ctx.currentTime);
+          gain.gain.linearRampToValueAtTime(0.08, this.ctx.currentTime + 0.05 + i * 0.06);
+          gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + 1.2);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(this.ctx.currentTime + i * 0.06);
+          osc.stop(this.ctx.currentTime + 1.3);
+        });
+      }
     };
 
-    const particles = [];
-    class ExhaustPuff {
-      constructor(x, y) {
-        this.x = x;
-        this.y = y;
-        this.vx = -(Math.random() * 2 + 2);
-        this.vy = -(Math.random() * 1.5 - 0.5);
-        this.alpha = 0.6;
-        this.size = Math.random() * 3 + 2;
-      }
-      update() {
-        this.x += this.vx;
-        this.y += this.vy;
-        this.alpha -= 0.02;
-        this.size += 0.2;
-      }
-      draw() {
-        ctx.fillStyle = `rgba(56, 189, 248, ${this.alpha * 0.5})`;
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-        ctx.fill();
-      }
+    /* =========================================================================
+       2. REAL THREE.JS 3D WEBGL ENGINE (Canyon, Wireframe, Sedan, Headlights)
+       ========================================================================= */
+    const canvas = document.getElementById("webgl-canvas");
+    const hudReadout = document.getElementById("hudReadout");
+
+    const scene = new THREE.Scene();
+    scene.fog = new THREE.FogExp2(0x04060a, 0.018);
+
+    const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 300);
+    camera.position.set(0, 10, 24);
+
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+    // Ambient & Directional Lighting
+    const ambientLight = new THREE.AmbientLight(0x0a1628, 1.8);
+    scene.add(ambientLight);
+
+    const moonLight = new THREE.DirectionalLight(0x00f2fe, 1.2);
+    moonLight.position.set(20, 40, 10);
+    scene.add(moonLight);
+
+    // Dynamic 3D Canyon Terrain
+    const terrainW = 80;
+    const terrainD = 140;
+    const segW = 60;
+    const segD = 100;
+    const terrainGeom = new THREE.PlaneGeometry(terrainW, terrainD, segW, segD);
+    terrainGeom.rotateX(-Math.PI / 2);
+
+    // Height function: Carves a center road valley through mountain peaks
+    function getElevation3D(x, z, timeOffset) {
+      const zOffset = z + timeOffset;
+      const roadDistance = Math.abs(x);
+      const canyonWalls = Math.pow(Math.min(roadDistance / 10, 1), 2) * 14;
+      const peaks = Math.sin(x * 0.1) * 3 + Math.cos(zOffset * 0.06) * 5 + Math.sin(x * 0.05 + zOffset * 0.04) * 4;
+      return canyonWalls + peaks;
     }
 
-    function drawWireframeSedan(x, y, angle) {
-      ctx.save();
-      ctx.translate(x, y);
-      ctx.rotate(angle);
+    // Material 1: Dark Obsidian Rock
+    const terrainMat = new THREE.MeshStandardMaterial({
+      color: 0x060b14,
+      roughness: 0.8,
+      metalness: 0.2,
+      flatShading: true
+    });
+    const terrainMesh = new THREE.Mesh(terrainGeom, terrainMat);
+    scene.add(terrainMesh);
 
-      // Chassis outline
-      ctx.strokeStyle = "#10b981";
-      ctx.fillStyle = "rgba(16, 185, 129, 0.12)";
-      ctx.lineWidth = 1.8;
+    // Material 2: Glowing Architectural Wireframe Contour
+    const wireMat = new THREE.MeshBasicMaterial({
+      color: 0x00f2fe,
+      wireframe: true,
+      transparent: true,
+      opacity: 0.25
+    });
+    const wireMesh = new THREE.Mesh(terrainGeom, wireMat);
+    wireMesh.position.y = 0.05;
+    scene.add(wireMesh);
 
-      ctx.beginPath();
-      ctx.moveTo(-45, -2);
-      ctx.lineTo(-40, -12);
-      ctx.lineTo(-24, -14);
-      ctx.lineTo(-10, -26);  // Rear windshield
-      ctx.lineTo(20, -26);   // Roof
-      ctx.lineTo(34, -14);   // Front windshield
-      ctx.lineTo(48, -12);   // Hood
-      ctx.lineTo(50, -2);    // Front bumper
-      ctx.lineTo(36, -2);    // Front wheel well
-      ctx.arc(24, -2, 12, 0, Math.PI, true);
-      ctx.lineTo(-14, -2);
-      ctx.arc(-26, -2, 12, 0, Math.PI, true); // Rear wheel well
-      ctx.lineTo(-45, -2);
-      ctx.closePath();
-      ctx.stroke();
-      ctx.fill();
+    // 3D Procedural Grand Tourer Sedan
+    const carGroup = new THREE.Group();
 
-      // Window divisions
-      ctx.strokeStyle = "rgba(56, 189, 248, 0.7)";
-      ctx.lineWidth = 1.2;
-      ctx.beginPath();
-      ctx.moveTo(-7, -24);
-      ctx.lineTo(4, -24);
-      ctx.lineTo(4, -14);
-      ctx.lineTo(-18, -14);
-      ctx.closePath();
-      ctx.moveTo(7, -24);
-      ctx.lineTo(18, -24);
-      ctx.lineTo(30, -14);
-      ctx.lineTo(7, -14);
-      ctx.closePath();
-      ctx.stroke();
+    // Body
+    const bodyGeom = new THREE.BoxGeometry(2.4, 0.8, 5.2);
+    const bodyMat = new THREE.MeshStandardMaterial({ color: 0x021622, metalness: 0.9, roughness: 0.2 });
+    const carBody = new THREE.Mesh(bodyGeom, bodyMat);
+    carBody.position.y = 0.7;
+    carGroup.add(carBody);
 
-      // Headlight projector beam
-      ctx.fillStyle = "rgba(255, 255, 255, 0.18)";
-      ctx.beginPath();
-      ctx.moveTo(50, -8);
-      ctx.lineTo(130, -22);
-      ctx.lineTo(130, 8);
-      ctx.closePath();
-      ctx.fill();
+    // Cabin / Windshield
+    const cabinGeom = new THREE.BoxGeometry(2.0, 0.7, 2.6);
+    const cabinMat = new THREE.MeshStandardMaterial({ color: 0x00f2fe, roughness: 0.1, transparent: true, opacity: 0.6 });
+    const carCabin = new THREE.Mesh(cabinGeom, cabinMat);
+    carCabin.position.set(0, 1.3, -0.3);
+    carGroup.add(carCabin);
 
-      // Wheels with spinning rims
-      function drawWheel(wx, wy) {
-        ctx.save();
-        ctx.translate(wx, wy);
-        ctx.rotate(car.wheelRotation);
-        ctx.strokeStyle = "#38bdf8";
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.arc(0, 0, 9, 0, Math.PI * 2);
-        ctx.stroke();
+    // 4 Wheels
+    const wheelGeom = new THREE.CylinderGeometry(0.45, 0.45, 0.35, 16);
+    wheelGeom.rotateZ(Math.PI / 2);
+    const wheelMat = new THREE.MeshBasicMaterial({ color: 0x00f2fe, wireframe: true });
 
-        // Cross-spokes
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.moveTo(-9, 0); ctx.lineTo(9, 0);
-        ctx.moveTo(0, -9); ctx.lineTo(0, 9);
-        ctx.stroke();
-        ctx.restore();
-      }
+    const wheels = [];
+    [[-1.25, 0.45, 1.6], [1.25, 0.45, 1.6], [-1.25, 0.45, -1.6], [1.25, 0.45, -1.6]].forEach(pos => {
+      const w = new THREE.Mesh(wheelGeom, wheelMat);
+      w.position.set(...pos);
+      carGroup.add(w);
+      wheels.push(w);
+    });
 
-      drawWheel(-26, -2);
-      drawWheel(24, -2);
+    // Real Volumetric Headlights
+    const leftLight = new THREE.SpotLight(0xffffff, 4, 35, Math.PI / 6, 0.3);
+    leftLight.position.set(-0.8, 0.8, -2.6);
+    leftLight.target.position.set(-0.8, 0, -25);
+    carGroup.add(leftLight);
+    carGroup.add(leftLight.target);
 
-      ctx.restore();
+    const rightLight = new THREE.SpotLight(0xffffff, 4, 35, Math.PI / 6, 0.3);
+    rightLight.position.set(0.8, 0.8, -2.6);
+    rightLight.target.position.set(0.8, 0, -25);
+    carGroup.add(rightLight);
+    carGroup.add(rightLight.target);
+
+    // Tail LED Strip
+    const tailGeom = new THREE.BoxGeometry(2.1, 0.12, 0.1);
+    const tailMat = new THREE.MeshBasicMaterial({ color: 0xff3366 });
+    const tailMesh = new THREE.Mesh(tailGeom, tailMat);
+    tailMesh.position.set(0, 0.8, 2.6);
+    carGroup.add(tailMesh);
+
+    scene.add(carGroup);
+
+    // Floating Stardust Particles
+    const starCount = 300;
+    const starGeom = new THREE.BufferGeometry();
+    const starCoords = new Float32Array(starCount * 3);
+    for (let i = 0; i < starCount * 3; i += 3) {
+      starCoords[i] = (Math.random() - 0.5) * 70;
+      starCoords[i + 1] = Math.random() * 25 + 2;
+      starCoords[i + 2] = (Math.random() - 0.5) * 80;
     }
+    starGeom.setAttribute('position', new THREE.BufferAttribute(starCoords, 3));
+    const starMat = new THREE.PointsMaterial({ color: 0x00f2fe, size: 0.25, transparent: true, opacity: 0.6 });
+    const stars = new THREE.Points(starGeom, starMat);
+    scene.add(stars);
 
-    // Animation Loop
-    function render() {
-      ctx.clearRect(0, 0, width, height);
-
-      // Scroll speed
-      roadOffset += 3.2;
-      car.wheelRotation += 0.18;
-
-      // Draw background mountain silhouette (parallax)
-      ctx.strokeStyle = "rgba(56, 189, 248, 0.15)";
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      for (let x = 0; x <= width; x += 30) {
-        const bgY = height * 0.62 + Math.sin((x + roadOffset * 0.3) * 0.003) * 60 + Math.cos(x * 0.008) * 20;
-        if (x === 0) ctx.moveTo(x, bgY);
-        else ctx.lineTo(x, bgY);
+    // Interactive Touch / Mouse Camera Parallax
+    let targetCamX = 0;
+    let targetCamY = 10;
+    window.addEventListener("mousemove", (e) => {
+      targetCamX = (e.clientX / window.innerWidth - 0.5) * 12;
+      targetCamY = 10 - (e.clientY / window.innerHeight - 0.5) * 6;
+    });
+    window.addEventListener("touchmove", (e) => {
+      if (e.touches.length > 0) {
+        targetCamX = (e.touches[0].clientX / window.innerWidth - 0.5) * 10;
       }
-      ctx.stroke();
+    }, { passive: true });
 
-      // Draw primary road mountain pass
-      ctx.strokeStyle = "rgba(56, 189, 248, 0.6)";
-      ctx.lineWidth = 2.2;
-      ctx.beginPath();
-      for (let x = 0; x <= width; x += 15) {
-        const gy = getGroundHeight(x, roadOffset);
-        if (x === 0) ctx.moveTo(x, gy);
-        else ctx.lineTo(x, gy);
+    window.addEventListener("resize", () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    // 60FPS 3D Render Loop
+    let timeDrive = 0;
+    let isGold = false;
+
+    function render3D() {
+      requestAnimationFrame(render3D);
+
+      timeDrive += 0.35;
+
+      // Update terrain heights seamlessly along Z axis
+      const posAttr = terrainGeom.attributes.position;
+      for (let i = 0; i < posAttr.count; i++) {
+        const vx = posAttr.getX(i);
+        const vz = posAttr.getZ(i);
+        const vy = getElevation3D(vx, vz, timeDrive);
+        posAttr.setY(i, vy);
       }
-      ctx.stroke();
+      posAttr.needsUpdate = true;
+      terrainGeom.computeVertexNormals();
 
-      // Fill beneath mountain contour
-      ctx.lineTo(width, height);
-      ctx.lineTo(0, height);
-      ctx.fillStyle = "rgba(10, 16, 26, 0.75)";
-      ctx.fill();
+      // Kinematic vehicle dynamics: sample elevation under front & rear axles
+      const carZ = 0;
+      const frontY = getElevation3D(0, carZ - 2.5, timeDrive);
+      const rearY = getElevation3D(0, carZ + 2.5, timeDrive);
+      const midY = (frontY + rearY) / 2;
+      const pitchAngle = Math.atan2(frontY - rearY, -5.0);
 
-      // Calculate car tangent & inclination
-      const carScreenX = width * 0.42;
-      const wheelRearX = carScreenX - car.wheelBase / 2;
-      const wheelFrontX = carScreenX + car.wheelBase / 2;
+      carGroup.position.set(0, midY, carZ);
+      carGroup.rotation.x = pitchAngle;
 
-      const rearY = getGroundHeight(wheelRearX, roadOffset);
-      const frontY = getGroundHeight(wheelFrontX, roadOffset);
+      // Rotate wheels to match speed
+      wheels.forEach(w => w.rotation.x -= 0.22);
 
-      const angle = Math.atan2(frontY - rearY, wheelFrontX - wheelRearX);
-      const midY = (rearY + frontY) / 2;
+      // Smooth Camera Damping
+      camera.position.x += (targetCamX - camera.position.x) * 0.05;
+      camera.position.y += (targetCamY - camera.position.y) * 0.05;
+      camera.lookAt(0, midY + 1.5, -8);
 
-      // Exhaust particle physics
-      if (Math.random() > 0.4) {
-        particles.push(new ExhaustPuff(wheelRearX - 10, rearY - 6));
-      }
-      for (let i = particles.length - 1; i >= 0; i--) {
-        particles[i].update();
-        particles[i].draw();
-        if (particles[i].alpha <= 0) particles.splice(i, 1);
-      }
+      // Realtime HUD Inclinometer readout
+      const slopeDeg = ((pitchAngle * 180) / Math.PI).toFixed(1);
+      hudReadout.innerText = `ALT: 3,490M • SLOPE: ${slopeDeg >= 0 ? "+" : ""}${slopeDeg}° • REALTIME 3D`;
 
-      // Render Sedan
-      drawWireframeSedan(carScreenX, midY, angle);
-
-      // HUD telemetry update
-      const slopeDeg = ((-angle * 180) / Math.PI).toFixed(1);
-      const elev = Math.round(350 + (height - midY) * 2.5);
-      telemetry.innerText = `V: 64 KM/H | SLOPE: ${slopeDeg >= 0 ? "+" : ""}${slopeDeg}° | ELEV: ${elev}M`;
-
-      requestAnimationFrame(render);
+      renderer.render(scene, camera);
     }
-    render();
+    render3D();
 
-    // --- Interactive Button & Evasive Logic ---
+    /* =========================================================================
+       3. EVASIVE TACTICAL BUTTON & GOLDEN HOUR CELEBRATION
+       ========================================================================= */
     const noBtn = document.getElementById("noBtn");
     const yesBtn = document.getElementById("yesBtn");
-    const initialView = document.getElementById("initialView");
-    const successView = document.getElementById("successView");
-    const waSubmit = document.getElementById("waSubmit");
+    const briefDeck = document.getElementById("briefDeck");
+    const celebrationPanel = document.getElementById("celebrationPanel");
+    const waConfirmLink = document.getElementById("waConfirmLink");
 
+    // Recipient Phone Number
     const targetPhone = "917814499077";
-    const waMsg = encodeURIComponent("Permit approved! It's an official date. Pack your bags, Chandigarh, Rishikesh, and Madhyamaheshwar await! 🏔️✨");
-    waSubmit.href = `https://wa.me/${targetPhone}?text=${waMsg}`;
+    const waMessage = encodeURIComponent(
+      "Permit 100% approved! 🎒✨ It's an official date. Pack your bags, AutoCAD is closed — we're taking the road trip to Chandigarh, Rishikesh, and Madhyamaheshwar! 🏔️🚗"
+    );
+    waConfirmLink.href = `https://wa.me/${targetPhone}?text=${waMessage}`;
 
     const cadErrors = [
       "No",
-      "SLOPE OVERLOAD",
-      "AutoCAD crashed",
-      "Corbusier said YES",
-      "Fatal Error: 404",
-      "Torque Insufficient",
-      "Recalculating Pass...",
-      "Invalid Geometry 😜"
+      "BEARING CAPACITY EXCEEDED",
+      "CORBUSIER VETOED THIS",
+      "OBJECT SNAP FAILED",
+      "FATAL: CANTILEVER COLLAPSE",
+      "MOMENT DISAPPROVED",
+      "STRUCTURE REQUIRES YES",
+      "ONLY YES IS LOAD-BEARING 😜"
     ];
-    let errIdx = 0;
 
-    function dodgeNo(e) {
-      if (e) e.preventDefault();
+    let errIndex = 0;
+    let yesScale = 1;
+
+    function repelNo(e) {
+      if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+
+      if (navigator.vibrate) navigator.vibrate([30, 40, 30]);
+      SoundBox.playEvasion();
 
       const pad = 24;
-      const btnW = noBtn.offsetWidth;
-      const btnH = noBtn.offsetHeight;
+      const bW = noBtn.offsetWidth;
+      const bH = noBtn.offsetHeight;
 
-      const maxX = window.innerWidth - btnW - pad;
-      const maxY = window.innerHeight - btnH - pad;
+      const maxW = window.innerWidth - bW - pad;
+      const maxH = window.innerHeight - bH - pad;
 
-      const nextX = Math.max(pad, Math.floor(Math.random() * maxX));
-      const nextY = Math.max(pad + 40, Math.floor(Math.random() * maxY));
+      const randX = Math.max(pad, Math.floor(Math.random() * maxW));
+      const randY = Math.max(pad + 40, Math.floor(Math.random() * maxH));
 
-      noBtn.style.left = `${nextX}px`;
-      noBtn.style.top = `${nextY}px`;
+      noBtn.style.left = `${randX}px`;
+      noBtn.style.top = `${randY}px`;
       noBtn.style.transform = "none";
 
-      errIdx = (errIdx + 1) % cadErrors.length;
-      noBtn.innerText = cadErrors[errIdx];
+      errIndex = (errIndex + 1) % cadErrors.length;
+      noBtn.innerText = cadErrors[errIndex];
+
+      // Grow Yes Button
+      yesScale += 0.08;
+      yesBtn.style.transform = `scale(${yesScale})`;
     }
 
-    noBtn.addEventListener("mouseenter", dodgeNo);
-    noBtn.addEventListener("touchstart", dodgeNo, { passive: false });
+    noBtn.addEventListener("mouseenter", repelNo);
+    noBtn.addEventListener("touchstart", repelNo, { passive: false });
 
+    // Yes Click -> Golden Hour Transformation
     yesBtn.addEventListener("click", () => {
-      initialView.style.display = "none";
-      noBtn.style.display = "none";
-      successView.style.display = "flex";
+      SoundBox.playChime();
+      if (navigator.vibrate) navigator.vibrate([60, 50, 100, 60, 120]);
 
-      const duration = 3000;
+      // Transform 3D Lighting into Himalayan Golden Hour
+      wireMat.color.setHex(0xf59e0b);
+      wireMat.opacity = 0.45;
+      moonLight.color.setHex(0xfbbf24);
+      moonLight.intensity = 2.0;
+      ambientLight.color.setHex(0x1a2e1a);
+
+      briefDeck.style.display = "none";
+      noBtn.style.display = "none";
+      celebrationPanel.style.display = "flex";
+
+      // Confetti Shower
+      const duration = 3.5 * 1000;
       const end = Date.now() + duration;
 
-      (function frame() {
-        confetti({ particleCount: 6, angle: 60, spread: 65, origin: { x: 0 } });
-        confetti({ particleCount: 6, angle: 120, spread: 65, origin: { x: 1 } });
-        if (Date.now() < end) requestAnimationFrame(frame);
+      (function burst() {
+        confetti({ particleCount: 7, angle: 60, spread: 60, origin: { x: 0 }, colors: ['#00f2fe', '#10b981', '#f59e0b', '#ffffff'] });
+        confetti({ particleCount: 7, angle: 120, spread: 60, origin: { x: 1 }, colors: ['#00f2fe', '#10b981', '#f59e0b', '#ffffff'] });
+        if (Date.now() < end) requestAnimationFrame(burst);
       })();
     });
   </script>
