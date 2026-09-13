@@ -3,19 +3,19 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>AUTOCAD - [ELEVATION_ROADTRIP.DWG]</title>
+  <title>AUTOCAD - [TERRAIN_PHYSICS_SIM.DWG]</title>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
   <style>
     :root {
-      --cad-bg: #1e1e1e;
-      --cad-grid: rgba(255, 255, 255, 0.05);
-      --cad-cyan: #00e5ff;
-      --cad-green: #00ff66;
-      --cad-red: #ff3366;
-      --cad-yellow: #ffd700;
-      --panel-bg: rgba(30, 30, 30, 0.82);
-      --border-line: rgba(0, 229, 255, 0.25);
+      --cad-bg: #12161f;
+      --cad-grid: rgba(56, 189, 248, 0.07);
+      --cad-cyan: #38bdf8;
+      --cad-green: #10b981;
+      --cad-red: #f43f5e;
+      --cad-yellow: #fbbf24;
+      --panel-bg: rgba(18, 24, 38, 0.85);
+      --border-line: rgba(56, 189, 248, 0.25);
     }
 
     * {
@@ -23,151 +23,111 @@
       margin: 0;
       padding: 0;
       -webkit-tap-highlight-color: transparent;
+      user-select: none;
     }
 
     body {
       min-height: 100vh;
       background-color: var(--cad-bg);
-      color: #e0e0e0;
+      color: #e2e8f0;
       font-family: 'Plus Jakarta Sans', sans-serif;
       overflow: hidden;
       position: relative;
     }
 
-    /* CAD Background Canvas & Grids */
-    .cad-viewport {
+    /* Fullscreen Physics Simulation Canvas */
+    #cadCanvas {
       position: fixed;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
-      pointer-events: none;
       z-index: 1;
-      background-image: 
-        linear-gradient(var(--cad-grid) 1px, transparent 1px),
-        linear-gradient(90deg, var(--cad-grid) 1px, transparent 1px);
-      background-size: 24px 24px;
+      display: block;
     }
 
-    /* CAD Technical UI Elements */
+    /* Top HUD Technical Bar */
     .cad-top-bar {
       position: fixed;
       top: 0;
       left: 0;
       width: 100%;
-      height: 28px;
-      background: #141414;
-      border-bottom: 1px solid #333;
+      height: 32px;
+      background: rgba(10, 14, 23, 0.9);
+      border-bottom: 1px solid rgba(56, 189, 248, 0.2);
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0 12px;
+      padding: 0 16px;
       font-family: 'JetBrains Mono', monospace;
       font-size: 11px;
-      color: #888;
-      z-index: 10;
+      color: #94a3b8;
+      z-index: 20;
+      backdrop-filter: blur(6px);
     }
 
-    .cad-ucs-icon {
-      position: absolute;
-      bottom: 120px;
-      left: 16px;
-      width: 40px;
-      height: 40px;
-      border-left: 2px solid #00e5ff;
-      border-bottom: 2px solid #ff3366;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 10px;
-      font-weight: 700;
-      z-index: 2;
+    .cad-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
 
-    .cad-ucs-icon .axis-y { position: absolute; top: -14px; left: 2px; color: #00e5ff; }
-    .cad-ucs-icon .axis-x { position: absolute; bottom: 2px; right: -14px; color: #ff3366; }
-
-    /* Moving Vector Mountain and Sedan Scene */
-    .cad-vector-scene {
-      position: absolute;
-      bottom: 90px;
-      left: 0;
-      width: 100%;
-      height: 240px;
-      overflow: hidden;
-      z-index: 1;
+    .live-dot {
+      width: 7px;
+      height: 7px;
+      background: var(--cad-green);
+      border-radius: 50%;
+      box-shadow: 0 0 8px var(--cad-green);
+      animation: pulse 1.5s infinite;
     }
 
-    .mountains-svg {
-      position: absolute;
-      bottom: 30px;
-      width: 200%;
-      height: 160px;
-      animation: panLandscape 35s linear infinite;
-    }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
 
-    @keyframes panLandscape {
-      0% { transform: translateX(0); }
-      100% { transform: translateX(-50%); }
-    }
-
-    .ground-line {
-      position: absolute;
-      bottom: 30px;
-      left: 0;
-      width: 100%;
-      height: 2px;
-      background: rgba(0, 229, 255, 0.4);
-      box-shadow: 0 0 8px rgba(0, 229, 255, 0.5);
-    }
-
-    /* Sedan moving along the route */
-    .sedan-wrapper {
-      position: absolute;
-      bottom: 31px;
-      width: 110px;
-      animation: driveSedan 12s linear infinite;
-    }
-
-    @keyframes driveSedan {
-      0% { left: -120px; }
-      100% { left: 105%; }
-    }
-
-    /* Foreground Interactive Container */
+    /* UI Application Layer */
     .app-screen {
       position: relative;
-      z-index: 5;
-      height: 100vh;
+      z-index: 10;
+      min-height: 100vh;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      padding: 38px 18px 24px;
+      padding: 44px 18px 24px;
+      pointer-events: none; /* Let background canvas breathe */
     }
 
     .main-card {
+      pointer-events: auto;
       background: var(--panel-bg);
       border: 1px solid var(--border-line);
-      border-radius: 12px;
-      padding: 18px 16px;
-      backdrop-filter: blur(10px);
-      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6);
+      border-radius: 14px;
+      padding: 20px 18px;
+      backdrop-filter: blur(14px);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+      max-width: 520px;
+      margin: 0 auto;
+      width: 100%;
+      position: relative;
     }
 
+    .corner-bracket {
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      border: 2px solid var(--cad-cyan);
+    }
+    .cb-tl { top: -1px; left: -1px; border-right: none; border-bottom: none; }
+    .cb-tr { top: -1px; right: -1px; border-left: none; border-bottom: none; }
+    .cb-bl { bottom: -1px; left: -1px; border-right: none; border-top: none; }
+    .cb-br { bottom: -1px; right: -1px; border-left: none; border-top: none; }
+
     .file-tag {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
       font-family: 'JetBrains Mono', monospace;
       font-size: 11px;
       color: var(--cad-cyan);
+      letter-spacing: 0.05em;
       margin-bottom: 8px;
-    }
-
-    .status-dot {
-      width: 6px;
-      height: 6px;
-      background: var(--cad-green);
-      border-radius: 50%;
-      box-shadow: 0 0 6px var(--cad-green);
+      display: flex;
+      justify-content: space-between;
     }
 
     h1 {
@@ -180,12 +140,12 @@
 
     p.subtitle {
       font-size: 0.85rem;
-      color: #a0aec0;
-      line-height: 1.4;
+      color: #94a3b8;
+      line-height: 1.45;
       margin-bottom: 14px;
     }
 
-    /* Route list */
+    /* Itinerary Route Nodes */
     .route-nodes {
       display: flex;
       flex-direction: column;
@@ -195,38 +155,28 @@
     .node-item {
       display: flex;
       align-items: center;
-      gap: 10px;
-      background: rgba(0, 0, 0, 0.35);
-      border: 1px solid rgba(255, 255, 255, 0.08);
+      gap: 12px;
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.06);
       border-radius: 8px;
-      padding: 8px 12px;
+      padding: 10px 12px;
     }
 
-    .node-glyph {
-      font-size: 1.1rem;
-    }
-
-    .node-info h4 {
-      font-size: 0.85rem;
-      color: #fff;
-      font-weight: 700;
-    }
-
-    .node-info p {
-      font-size: 0.72rem;
-      color: #8fa0b5;
-      font-family: 'JetBrains Mono', monospace;
-    }
+    .node-glyph { font-size: 1.2rem; }
+    .node-info h4 { font-size: 0.86rem; color: #f8fafc; font-weight: 700; }
+    .node-info p { font-size: 0.73rem; color: #94a3b8; font-family: 'JetBrains Mono', monospace; }
 
     /* Action Deck */
     .action-deck {
-      position: relative;
+      pointer-events: auto;
       width: 100%;
-      margin-bottom: 12px;
+      max-width: 520px;
+      margin: 0 auto;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 12px;
+      gap: 14px;
+      margin-bottom: 8px;
     }
 
     .prompt-text {
@@ -234,50 +184,51 @@
       font-weight: 800;
       color: #ffffff;
       text-align: center;
-      text-shadow: 0 2px 10px rgba(0,0,0,0.8);
+      text-shadow: 0 2px 12px rgba(0,0,0,0.9);
     }
 
     #yesBtn {
       width: 100%;
       max-width: 320px;
-      padding: 16px 24px;
+      padding: 16px 28px;
       background: var(--cad-green);
-      color: #0b150e;
+      color: #062b19;
       border: none;
       border-radius: 50px;
-      font-size: 1.1rem;
+      font-size: 1.15rem;
       font-weight: 800;
       letter-spacing: 0.02em;
       cursor: pointer;
-      box-shadow: 0 0 24px rgba(0, 255, 102, 0.45);
+      box-shadow: 0 0 30px rgba(16, 185, 129, 0.5);
+      transition: transform 0.15s ease, box-shadow 0.2s ease;
       touch-action: manipulation;
-      transition: transform 0.15s ease;
-      z-index: 50;
     }
 
-    /* The Runaway No Button */
+    #yesBtn:active { transform: scale(0.97); }
+
+    /* The Physics Runaway 'No' Button */
     #noBtn {
       position: fixed;
-      top: 75%;
+      top: 76%;
       left: 50%;
       transform: translate(-50%, -50%);
       padding: 10px 22px;
       background: var(--cad-red);
       color: #fff;
-      border: 1px solid rgba(255, 255, 255, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.4);
       border-radius: 50px;
       font-size: 0.85rem;
       font-weight: 700;
       font-family: 'JetBrains Mono', monospace;
       cursor: pointer;
-      box-shadow: 0 0 16px rgba(255, 51, 102, 0.5);
+      box-shadow: 0 0 20px rgba(244, 63, 94, 0.6);
       white-space: nowrap;
-      z-index: 999;
+      z-index: 100;
       touch-action: manipulation;
-      transition: all 0.18s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+      transition: all 0.2s cubic-bezier(0.18, 0.89, 0.32, 1.28);
     }
 
-    /* Success Fullscreen Panel */
+    /* Success Fullscreen Overlay */
     #successView {
       display: none;
       position: fixed;
@@ -285,17 +236,18 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(15, 20, 28, 0.95);
+      background: rgba(10, 14, 23, 0.95);
       z-index: 1000;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       text-align: center;
       padding: 24px;
+      backdrop-filter: blur(12px);
     }
 
     #successView h2 {
-      font-size: 2.1rem;
+      font-size: 2.2rem;
       color: var(--cad-green);
       margin-bottom: 12px;
       font-weight: 800;
@@ -306,76 +258,47 @@
       align-items: center;
       gap: 10px;
       background: #25d366;
-      color: #0b150e;
+      color: #062b19;
       font-weight: 800;
-      padding: 16px 30px;
+      padding: 16px 32px;
       border-radius: 12px;
       text-decoration: none;
       margin-top: 24px;
       box-shadow: 0 8px 30px rgba(37, 211, 102, 0.4);
-      font-size: 1rem;
+      font-size: 1.05rem;
+      transition: transform 0.2s ease;
     }
   </style>
 </head>
 <body>
 
-  <!-- CAD Viewport Overlays -->
+  <!-- CAD Top Technical Status -->
   <div class="cad-top-bar">
-    <span>AUTOCAD 2026 // MODEL SPACE</span>
-    <span id="coords">X: 307.41  Y: 189.04  Z: 0.00</span>
-  </div>
-
-  <div class="cad-viewport"></div>
-
-  <!-- CAD Moving Landscape: Wireframe Mountains & Sedan -->
-  <div class="cad-vector-scene">
-    <svg class="mountains-svg" viewBox="0 0 1200 160" preserveAspectRatio="none" fill="none">
-      <!-- Background Ridge -->
-      <path d="M0,160 L120,40 L260,160 L420,20 L580,160 L720,40 L860,160 L1020,20 L1180,160 L1200,160" 
-            stroke="rgba(0, 229, 255, 0.22)" stroke-width="1.5" stroke-dasharray="6,4"/>
-      <!-- Mid-ground Contour Ridge -->
-      <path d="M0,160 L180,70 L340,160 L500,60 L660,160 L780,70 L940,160 L1100,60 L1200,160" 
-            stroke="rgba(0, 229, 255, 0.45)" stroke-width="1.8"/>
-      <!-- Technical Elevation Markers -->
-      <text x="425" y="18" fill="#ffd700" font-family="JetBrains Mono" font-size="9">EL +3,490m (MADHYAMAHESHWAR)</text>
-      <circle cx="420" cy="20" r="3" fill="#ffd700" />
-    </svg>
-
-    <div class="ground-line"></div>
-
-    <!-- Wireframe Sedan Car -->
-    <div class="sedan-wrapper" id="sedan">
-      <svg viewBox="0 0 120 45" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <!-- Body Shell -->
-        <path d="M5,28 L20,28 L32,16 L74,16 L88,28 L114,28 C116,28 118,30 118,32 L116,36 C116,37 114,38 112,38 L104,38 C102,33 96,33 94,38 L36,38 C34,33 28,33 26,38 L10,38 C8,38 5,36 5,34 Z" 
-              stroke="#00ff66" stroke-width="1.6" fill="rgba(0, 255, 102, 0.08)"/>
-        <!-- Windows / Windshield -->
-        <path d="M35,26 L44,18 L70,18 L68,26 Z" stroke="#00ff66" stroke-width="1.2"/>
-        <path d="M72,26 L73,18 L84,26 Z" stroke="#00ff66" stroke-width="1.2"/>
-        <!-- Wheels -->
-        <circle cx="31" cy="38" r="5" stroke="#00e5ff" stroke-width="1.5" />
-        <circle cx="99" cy="38" r="5" stroke="#00e5ff" stroke-width="1.5" />
-        <!-- Headlight Beam -->
-        <polygon points="115,29 135,26 135,35 115,31" fill="rgba(255, 255, 255, 0.25)"/>
-      </svg>
+    <div class="cad-status">
+      <span class="live-dot"></span>
+      <span>AUTOCAD ROADTRIP_ENG.DWG</span>
     </div>
+    <span id="telemetry">V: 68 KM/H | SLOPE: +0.0° | ELEV: 350M</span>
   </div>
 
-  <div class="cad-ucs-icon">
-    <span class="axis-y">Y</span>
-    <span class="axis-x">X</span>
-  </div>
+  <!-- Realtime Simulation Canvas -->
+  <canvas id="cadCanvas"></canvas>
 
-  <!-- Foreground Application Interface -->
+  <!-- Interactive Content Layer -->
   <div class="app-screen" id="initialView">
     <div class="main-card">
+      <div class="corner-bracket cb-tl"></div>
+      <div class="corner-bracket cb-tr"></div>
+      <div class="corner-bracket cb-bl"></div>
+      <div class="corner-bracket cb-br"></div>
+
       <div class="file-tag">
-        <span class="status-dot"></span>
-        <span>SPEC // ARCH_ROADTRIP_2026.DWG</span>
+        <span>PROJECT: HIMALAYAN ELEVATION</span>
+        <span>SCALE: 1:1</span>
       </div>
       <h1>Akshada, Project Elevation</h1>
       <p class="subtitle">
-        Blueprint signed off. Departing Pune for Chandigarh. The Garhwal mountain site inspection is missing its lead architect.
+        Architectural plan signed off. Departure from Pune to Chandigarh is on the boards. Site inspection is pending your presence.
       </p>
 
       <div class="route-nodes">
@@ -383,21 +306,21 @@
           <span class="node-glyph">✈️</span>
           <div class="node-info">
             <h4>Phase I: Pune → Chandigarh</h4>
-            <p>Le Corbusier concrete & takeoff espresso</p>
+            <p>Le Corbusier concrete sectors & pre-trek espresso</p>
           </div>
         </div>
         <div class="node-item">
           <span class="node-glyph">🌉</span>
           <div class="node-info">
             <h4>Phase II: Chandigarh → Rishikesh</h4>
-            <p>Suspension bridges & riverside dusk chai</p>
+            <p>Suspension bridges over Ganga & dusk chai</p>
           </div>
         </div>
         <div class="node-item">
           <span class="node-glyph">🏔️</span>
           <div class="node-info">
             <h4>Phase III: Rishikesh → Madhyamaheshwar</h4>
-            <p>Meadow campsite at 3,490m elevation</p>
+            <p>Himalayan high alpine meadow at 3,490m elevation</p>
           </div>
         </div>
       </div>
@@ -412,15 +335,14 @@
   <!-- Runaway No Button -->
   <button id="noBtn">No</button>
 
-  <!-- Success View -->
+  <!-- Success Confirmation Screen -->
   <div id="successView">
     <div class="file-tag" style="color: var(--cad-green); margin-bottom: 12px;">
-      <span class="status-dot"></span>
-      <span>PERMIT STATUS: 100% APPROVED</span>
+      <span>PERMIT REVISION: FINAL APPROVED</span>
     </div>
     <h2>It’s an Official Date! 🏔️✨</h2>
-    <p style="color: #cbd5e1; font-size: 0.95rem; line-height: 1.5; max-width: 320px;">
-      Close AutoCAD, pack your trek pack. Pune to Himalayan summits is confirmed.
+    <p style="color: #94a3b8; font-size: 0.95rem; line-height: 1.6; max-width: 340px;">
+      Close AutoCAD, leave the drafting table, and pack your trekking pack. Pune to Himalayan summits is confirmed.
     </p>
     <a class="wa-button" id="waSubmit" href="#" target="_blank">
       Confirm on WhatsApp 👉
@@ -428,38 +350,235 @@
   </div>
 
   <script>
+    // --- Canvas Simulation & Physics Engine ---
+    const canvas = document.getElementById("cadCanvas");
+    const ctx = canvas.getContext("2d");
+    const telemetry = document.getElementById("telemetry");
+
+    let width, height;
+    function resize() {
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+    }
+    window.addEventListener("resize", resize);
+    resize();
+
+    // Terrain Multi-Sine elevation formula
+    let roadOffset = 0;
+    function getGroundHeight(x, offset) {
+      const globalX = x + offset;
+      const baseGround = height * 0.78;
+      // Layered sin/cos harmonics create realistic mountain passes & valleys
+      const wave1 = Math.sin(globalX * 0.0022) * 55;
+      const wave2 = Math.cos(globalX * 0.0055) * 35;
+      const wave3 = Math.sin(globalX * 0.012) * 14;
+      return baseGround + wave1 + wave2 + wave3;
+    }
+
+    // Car properties & particle exhaust
+    const car = {
+      x: 0,
+      y: 0,
+      angle: 0,
+      wheelBase: 64,
+      wheelRotation: 0
+    };
+
+    const particles = [];
+    class ExhaustPuff {
+      constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.vx = -(Math.random() * 2 + 2);
+        this.vy = -(Math.random() * 1.5 - 0.5);
+        this.alpha = 0.6;
+        this.size = Math.random() * 3 + 2;
+      }
+      update() {
+        this.x += this.vx;
+        this.y += this.vy;
+        this.alpha -= 0.02;
+        this.size += 0.2;
+      }
+      draw() {
+        ctx.fillStyle = `rgba(56, 189, 248, ${this.alpha * 0.5})`;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    function drawWireframeSedan(x, y, angle) {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(angle);
+
+      // Chassis outline
+      ctx.strokeStyle = "#10b981";
+      ctx.fillStyle = "rgba(16, 185, 129, 0.12)";
+      ctx.lineWidth = 1.8;
+
+      ctx.beginPath();
+      ctx.moveTo(-45, -2);
+      ctx.lineTo(-40, -12);
+      ctx.lineTo(-24, -14);
+      ctx.lineTo(-10, -26);  // Rear windshield
+      ctx.lineTo(20, -26);   // Roof
+      ctx.lineTo(34, -14);   // Front windshield
+      ctx.lineTo(48, -12);   // Hood
+      ctx.lineTo(50, -2);    // Front bumper
+      ctx.lineTo(36, -2);    // Front wheel well
+      ctx.arc(24, -2, 12, 0, Math.PI, true);
+      ctx.lineTo(-14, -2);
+      ctx.arc(-26, -2, 12, 0, Math.PI, true); // Rear wheel well
+      ctx.lineTo(-45, -2);
+      ctx.closePath();
+      ctx.stroke();
+      ctx.fill();
+
+      // Window divisions
+      ctx.strokeStyle = "rgba(56, 189, 248, 0.7)";
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(-7, -24);
+      ctx.lineTo(4, -24);
+      ctx.lineTo(4, -14);
+      ctx.lineTo(-18, -14);
+      ctx.closePath();
+      ctx.moveTo(7, -24);
+      ctx.lineTo(18, -24);
+      ctx.lineTo(30, -14);
+      ctx.lineTo(7, -14);
+      ctx.closePath();
+      ctx.stroke();
+
+      // Headlight projector beam
+      ctx.fillStyle = "rgba(255, 255, 255, 0.18)";
+      ctx.beginPath();
+      ctx.moveTo(50, -8);
+      ctx.lineTo(130, -22);
+      ctx.lineTo(130, 8);
+      ctx.closePath();
+      ctx.fill();
+
+      // Wheels with spinning rims
+      function drawWheel(wx, wy) {
+        ctx.save();
+        ctx.translate(wx, wy);
+        ctx.rotate(car.wheelRotation);
+        ctx.strokeStyle = "#38bdf8";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(0, 0, 9, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // Cross-spokes
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(-9, 0); ctx.lineTo(9, 0);
+        ctx.moveTo(0, -9); ctx.lineTo(0, 9);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      drawWheel(-26, -2);
+      drawWheel(24, -2);
+
+      ctx.restore();
+    }
+
+    // Animation Loop
+    function render() {
+      ctx.clearRect(0, 0, width, height);
+
+      // Scroll speed
+      roadOffset += 3.2;
+      car.wheelRotation += 0.18;
+
+      // Draw background mountain silhouette (parallax)
+      ctx.strokeStyle = "rgba(56, 189, 248, 0.15)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      for (let x = 0; x <= width; x += 30) {
+        const bgY = height * 0.62 + Math.sin((x + roadOffset * 0.3) * 0.003) * 60 + Math.cos(x * 0.008) * 20;
+        if (x === 0) ctx.moveTo(x, bgY);
+        else ctx.lineTo(x, bgY);
+      }
+      ctx.stroke();
+
+      // Draw primary road mountain pass
+      ctx.strokeStyle = "rgba(56, 189, 248, 0.6)";
+      ctx.lineWidth = 2.2;
+      ctx.beginPath();
+      for (let x = 0; x <= width; x += 15) {
+        const gy = getGroundHeight(x, roadOffset);
+        if (x === 0) ctx.moveTo(x, gy);
+        else ctx.lineTo(x, gy);
+      }
+      ctx.stroke();
+
+      // Fill beneath mountain contour
+      ctx.lineTo(width, height);
+      ctx.lineTo(0, height);
+      ctx.fillStyle = "rgba(10, 16, 26, 0.75)";
+      ctx.fill();
+
+      // Calculate car tangent & inclination
+      const carScreenX = width * 0.42;
+      const wheelRearX = carScreenX - car.wheelBase / 2;
+      const wheelFrontX = carScreenX + car.wheelBase / 2;
+
+      const rearY = getGroundHeight(wheelRearX, roadOffset);
+      const frontY = getGroundHeight(wheelFrontX, roadOffset);
+
+      const angle = Math.atan2(frontY - rearY, wheelFrontX - wheelRearX);
+      const midY = (rearY + frontY) / 2;
+
+      // Exhaust particle physics
+      if (Math.random() > 0.4) {
+        particles.push(new ExhaustPuff(wheelRearX - 10, rearY - 6));
+      }
+      for (let i = particles.length - 1; i >= 0; i--) {
+        particles[i].update();
+        particles[i].draw();
+        if (particles[i].alpha <= 0) particles.splice(i, 1);
+      }
+
+      // Render Sedan
+      drawWireframeSedan(carScreenX, midY, angle);
+
+      // HUD telemetry update
+      const slopeDeg = ((-angle * 180) / Math.PI).toFixed(1);
+      const elev = Math.round(350 + (height - midY) * 2.5);
+      telemetry.innerText = `V: 64 KM/H | SLOPE: ${slopeDeg >= 0 ? "+" : ""}${slopeDeg}° | ELEV: ${elev}M`;
+
+      requestAnimationFrame(render);
+    }
+    render();
+
+    // --- Interactive Button & Evasive Logic ---
     const noBtn = document.getElementById("noBtn");
     const yesBtn = document.getElementById("yesBtn");
     const initialView = document.getElementById("initialView");
     const successView = document.getElementById("successView");
     const waSubmit = document.getElementById("waSubmit");
-    const coords = document.getElementById("coords");
 
-    // Dynamic CAD coordinate simulator
-    setInterval(() => {
-      const rx = (Math.random() * 500 + 100).toFixed(2);
-      const ry = (Math.random() * 300 + 50).toFixed(2);
-      coords.innerText = `X: ${rx}  Y: ${ry}  Z: 0.00`;
-    }, 1200);
-
-    // Embedded target phone number
     const targetPhone = "917814499077";
     const waMsg = encodeURIComponent("Permit approved! It's an official date. Pack your bags, Chandigarh, Rishikesh, and Madhyamaheshwar await! 🏔️✨");
     waSubmit.href = `https://wa.me/${targetPhone}?text=${waMsg}`;
 
     const cadErrors = [
       "No",
-      "ERR: SNAP_FAILED",
+      "SLOPE OVERLOAD",
+      "AutoCAD crashed",
       "Corbusier said YES",
       "Fatal Error: 404",
-      "Plotting denied",
-      "Try again 😜",
-      "Re-centering...",
-      "Invalid Command"
+      "Torque Insufficient",
+      "Recalculating Pass...",
+      "Invalid Geometry 😜"
     ];
     let errIdx = 0;
 
-    // Viewport-wide runaway dodging logic
     function dodgeNo(e) {
       if (e) e.preventDefault();
 
@@ -477,7 +596,6 @@
       noBtn.style.top = `${nextY}px`;
       noBtn.style.transform = "none";
 
-      // Update text with CAD-themed witty errors
       errIdx = (errIdx + 1) % cadErrors.length;
       noBtn.innerText = cadErrors[errIdx];
     }
@@ -485,7 +603,6 @@
     noBtn.addEventListener("mouseenter", dodgeNo);
     noBtn.addEventListener("touchstart", dodgeNo, { passive: false });
 
-    // Success event
     yesBtn.addEventListener("click", () => {
       initialView.style.display = "none";
       noBtn.style.display = "none";
@@ -495,8 +612,8 @@
       const end = Date.now() + duration;
 
       (function frame() {
-        confetti({ particleCount: 5, angle: 60, spread: 60, origin: { x: 0 } });
-        confetti({ particleCount: 5, angle: 120, spread: 60, origin: { x: 1 } });
+        confetti({ particleCount: 6, angle: 60, spread: 65, origin: { x: 0 } });
+        confetti({ particleCount: 6, angle: 120, spread: 65, origin: { x: 1 } });
         if (Date.now() < end) requestAnimationFrame(frame);
       })();
     });
